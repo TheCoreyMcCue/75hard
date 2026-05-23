@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { Check, RotateCcw, History as HistoryIcon, Calendar as CalendarIcon } from "lucide-react";
+import { Check, RotateCcw, History as HistoryIcon, Calendar as CalendarIcon, XCircle } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Celebration } from "@/components/celebration";
@@ -10,6 +10,7 @@ import {
   resetChallengeAction,
   toggleTaskAction,
   completeChallengeAction,
+  abandonChallengeAction,
 } from "@/lib/actions/challenge";
 import { logoutAction } from "@/lib/actions/auth";
 import type { Challenge, DailyLog } from "@/lib/types";
@@ -24,6 +25,7 @@ type Props = {
 export function Dashboard({ challenge, dayNumber, completedTaskIds, allLogs }: Props) {
   const [completed, setCompleted] = useState<Set<string>>(new Set(completedTaskIds));
   const [resetOpen, setResetOpen] = useState(false);
+  const [abandonOpen, setAbandonOpen] = useState(false);
   const [pending, startTransition] = useTransition();
   const [celebrating, setCelebrating] = useState(false);
   const [acknowledged, setAcknowledged] = useState(
@@ -61,6 +63,13 @@ export function Dashboard({ challenge, dayNumber, completedTaskIds, allLogs }: P
     startTransition(async () => {
       await resetChallengeAction(challenge.challengeId);
       setResetOpen(false);
+    });
+  }
+
+  function confirmAbandon() {
+    startTransition(async () => {
+      await abandonChallengeAction(challenge.challengeId);
+      setAbandonOpen(false);
     });
   }
 
@@ -146,17 +155,37 @@ export function Dashboard({ challenge, dayNumber, completedTaskIds, allLogs }: P
 
         <ChallengeGrid challenge={challenge} logs={allLogs} today={dayNumber} />
 
-        <section className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-white/60 leading-relaxed">
-            Missed a task? The strict rule is reset to Day 1.
+        <section className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/50">
+            Manage challenge
           </p>
-          <Button
-            variant="danger"
-            onClick={() => setResetOpen(true)}
-            className="self-end whitespace-nowrap sm:self-auto sm:shrink-0"
-          >
-            <RotateCcw className="h-4 w-4" /> I missed a day
-          </Button>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
+            <div className="flex-1 space-y-2">
+              <p className="text-sm text-white/60 leading-relaxed">
+                Missed a task? Strict 75 Hard rule: reset to Day 1 with the same rules.
+              </p>
+              <Button
+                variant="danger"
+                onClick={() => setResetOpen(true)}
+                className="w-full whitespace-nowrap sm:w-auto"
+              >
+                <RotateCcw className="h-4 w-4" /> I missed a day
+              </Button>
+            </div>
+            <div className="hidden sm:block w-px bg-white/10" aria-hidden />
+            <div className="flex-1 space-y-2">
+              <p className="text-sm text-white/60 leading-relaxed">
+                Want to start over with different rules? End this challenge first.
+              </p>
+              <Button
+                variant="outline"
+                onClick={() => setAbandonOpen(true)}
+                className="w-full whitespace-nowrap sm:w-auto"
+              >
+                <XCircle className="h-4 w-4" /> End challenge
+              </Button>
+            </div>
+          </div>
         </section>
       </main>
 
@@ -168,9 +197,51 @@ export function Dashboard({ challenge, dayNumber, completedTaskIds, allLogs }: P
         />
       )}
 
+      {abandonOpen && (
+        <AbandonDialog
+          pending={pending}
+          onCancel={() => setAbandonOpen(false)}
+          onConfirm={confirmAbandon}
+        />
+      )}
+
       {celebrating && (
         <Celebration onDone={() => setCelebrating(false)} dayNumber={dayNumber} />
       )}
+    </div>
+  );
+}
+
+function AbandonDialog({
+  pending,
+  onCancel,
+  onConfirm,
+}: {
+  pending: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div className="w-full max-w-md space-y-4 rounded-2xl border border-white/10 bg-[#0b1020] p-6 shadow-2xl">
+        <h2 className="text-xl font-bold tracking-tight text-white">End this challenge?</h2>
+        <p className="text-sm text-white/60 leading-relaxed">
+          Your current attempt will be archived as abandoned. You&apos;ll be able to set up a new
+          challenge with different rules. This can&apos;t be undone.
+        </p>
+        <div className="flex justify-end gap-2 pt-2">
+          <Button variant="secondary" onClick={onCancel} disabled={pending}>
+            Cancel
+          </Button>
+          <Button onClick={onConfirm} disabled={pending}>
+            {pending ? "Ending…" : "End challenge"}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

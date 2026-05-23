@@ -4,7 +4,7 @@ export type Task = {
   description?: string;
 };
 
-export type ChallengeStatus = "active" | "completed" | "failed";
+export type ChallengeStatus = "active" | "completed" | "failed" | "abandoned";
 
 export type Challenge = {
   userId: string;

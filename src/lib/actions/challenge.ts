@@ -113,3 +113,14 @@ export async function completeChallengeAction(challengeId: string): Promise<void
   revalidatePath("/");
   revalidatePath("/history");
 }
+
+export async function abandonChallengeAction(challengeId: string): Promise<void> {
+  const userId = await requireUserId();
+  const active = await getActiveChallenge(userId);
+  if (!active || active.challengeId !== challengeId) return;
+
+  await updateChallengeStatus(userId, challengeId, "abandoned");
+  revalidatePath("/");
+  revalidatePath("/history");
+  revalidatePath("/calendar");
+}

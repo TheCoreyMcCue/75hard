@@ -13,6 +13,8 @@ function statusStyle(status: ChallengeStatus): string {
     case "completed":
       return "bg-cyan-500/15 text-cyan-300 border border-cyan-500/30";
     case "failed":
+      return "bg-red-500/10 text-red-300/80 border border-red-500/20";
+    case "abandoned":
       return "bg-white/5 text-white/50 border border-white/10";
   }
 }
