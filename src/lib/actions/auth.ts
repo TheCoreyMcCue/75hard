@@ -45,13 +45,16 @@ export async function signupAction(
   const { email, password } = parsed.data;
 
   if (!allowlistContains(email)) {
-    return { error: "Signups are restricted. Contact the owner if you need access." };
+    return {
+      error: "Signups are restricted. Contact the owner if you need access.",
+    };
   }
 
   try {
     await createUser(email, password);
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to create account";
+    const message =
+      err instanceof Error ? err.message : "Failed to create account";
     return { error: message };
   }
 
