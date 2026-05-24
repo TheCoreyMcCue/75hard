@@ -12,11 +12,13 @@ import {
 } from "@/lib/db/challenges";
 import { getDailyLog, upsertDailyLog } from "@/lib/db/daily-logs";
 import { STANDARD_DURATION_DAYS, type Task } from "@/lib/types";
+import { log } from "@/lib/log";
 
 async function requireUserId(): Promise<string> {
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) {
+    log.warn("auth.unauthenticated_request");
     redirect("/login");
   }
   return userId;
@@ -40,18 +42,40 @@ export async function startChallengeAction(
   durationDays: number = STANDARD_DURATION_DAYS,
 ): Promise<StartChallengeResult> {
   const userId = await requireUserId();
+  log.info("challenge.start_attempt", {
+    userId,
+    taskCount: tasks.length,
+    durationDays,
+  });
 
   const parsed = startChallengeSchema.safeParse({ tasks, durationDays });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid challenge setup" };
+    const issue = parsed.error.issues[0]?.message ?? "Invalid challenge setup";
+    log.warn("challenge.start_invalid", { userId, issue });
+    return { error: issue };
   }
 
   const existing = await getActiveChallenge(userId);
   if (existing) {
+    log.warn("challenge.start_rejected_active_exists", {
+      userId,
+      existingChallengeId: existing.challengeId,
+    });
     return { error: "You already have an active challenge" };
   }
 
-  await createChallenge(userId, parsed.data.tasks, parsed.data.durationDays ?? STANDARD_DURATION_DAYS);
+  const challenge = await createChallenge(
+    userId,
+    parsed.data.tasks,
+    parsed.data.durationDays ?? STANDARD_DURATION_DAYS,
+  );
+  log.info("challenge.started", {
+    userId,
+    challengeId: challenge.challengeId,
+    taskCount: challenge.tasks.length,
+    durationDays: challenge.durationDays,
+  });
+
   revalidatePath("/");
   redirect("/");
 }
@@ -67,17 +91,19 @@ export async function toggleTaskAction(
     getDailyLog(userId, challengeId, dayNumber),
     getChallenge(userId, challengeId),
   ]);
-  if (!challenge) return;
+  if (!challenge) {
+    log.warn("challenge.toggle_missing_challenge", { userId, challengeId, dayNumber });
+    return;
+  }
   const totalTasks = challenge.tasks.length;
 
   const completed = new Set(existing?.completedTaskIds ?? []);
-  if (completed.has(taskId)) {
-    completed.delete(taskId);
-  } else {
-    completed.add(taskId);
-  }
+  const wasCompleted = completed.has(taskId);
+  if (wasCompleted) completed.delete(taskId);
+  else completed.add(taskId);
 
   const completedList = [...completed];
+  const allDone = totalTasks > 0 && completedList.length === totalTasks;
 
   await upsertDailyLog({
     userId,
@@ -85,8 +111,18 @@ export async function toggleTaskAction(
     dayNumber,
     date: existing?.date ?? new Date().toISOString().slice(0, 10),
     completedTaskIds: completedList,
-    allCompleted: totalTasks > 0 && completedList.length === totalTasks,
+    allCompleted: allDone,
     updatedAt: new Date().toISOString(),
+  });
+
+  log.info("challenge.task_toggled", {
+    userId,
+    challengeId,
+    dayNumber,
+    taskId,
+    nowCompleted: !wasCompleted,
+    dayProgress: `${completedList.length}/${totalTasks}`,
+    dayFullyDone: allDone,
   });
 
   revalidatePath("/");
@@ -97,11 +133,18 @@ export async function resetChallengeAction(challengeId: string): Promise<void> {
   const userId = await requireUserId();
   const active = await getActiveChallenge(userId);
   if (!active || active.challengeId !== challengeId) {
+    log.warn("challenge.reset_no_op", { userId, requestedChallengeId: challengeId });
     return;
   }
 
   await updateChallengeStatus(userId, challengeId, "failed");
-  await createChallenge(userId, active.tasks, active.durationDays);
+  const fresh = await createChallenge(userId, active.tasks, active.durationDays);
+
+  log.info("challenge.reset", {
+    userId,
+    failedChallengeId: challengeId,
+    newChallengeId: fresh.challengeId,
+  });
 
   revalidatePath("/");
   revalidatePath("/history");
@@ -110,6 +153,7 @@ export async function resetChallengeAction(challengeId: string): Promise<void> {
 export async function completeChallengeAction(challengeId: string): Promise<void> {
   const userId = await requireUserId();
   await updateChallengeStatus(userId, challengeId, "completed");
+  log.info("challenge.completed", { userId, challengeId });
   revalidatePath("/");
   revalidatePath("/history");
 }
@@ -117,9 +161,14 @@ export async function completeChallengeAction(challengeId: string): Promise<void
 export async function abandonChallengeAction(challengeId: string): Promise<void> {
   const userId = await requireUserId();
   const active = await getActiveChallenge(userId);
-  if (!active || active.challengeId !== challengeId) return;
+  if (!active || active.challengeId !== challengeId) {
+    log.warn("challenge.abandon_no_op", { userId, requestedChallengeId: challengeId });
+    return;
+  }
 
   await updateChallengeStatus(userId, challengeId, "abandoned");
+  log.info("challenge.abandoned", { userId, challengeId });
+
   revalidatePath("/");
   revalidatePath("/history");
   revalidatePath("/calendar");
