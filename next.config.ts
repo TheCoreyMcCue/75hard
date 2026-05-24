@@ -1,7 +1,24 @@
 import type { NextConfig } from "next";
+import { execSync } from "node:child_process";
+
+function gitSha(): string {
+  try {
+    return execSync("git rev-parse --short HEAD", { stdio: ["ignore", "pipe", "ignore"] })
+      .toString()
+      .trim();
+  } catch {
+    return "dev";
+  }
+}
+
+const version = process.env.DD_VERSION ?? gitSha();
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  env: {
+    DD_VERSION: version,
+    NEXT_PUBLIC_DD_VERSION: version,
+  },
+  serverExternalPackages: ["dd-trace"],
 };
 
 export default nextConfig;

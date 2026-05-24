@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { DatadogInit } from "@/components/datadog-init";
 
 export const metadata: Metadata = {
   title: "75 Hard Tracker",
@@ -24,7 +25,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full antialiased">
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full">
+        <DatadogInit />
+        {children}
+      </body>
     </html>
   );
 }
