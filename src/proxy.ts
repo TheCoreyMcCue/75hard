@@ -1,7 +1,22 @@
 import NextAuth from "next-auth";
+import tracer from "dd-trace";
 import { authConfig } from "./auth.config";
 
 const auth = NextAuth(authConfig).auth;
+
+function traceContext(): Record<string, unknown> {
+  try {
+    const span = tracer?.scope?.()?.active?.();
+    if (!span) return {};
+    const ctx = span.context();
+    const trace_id = ctx?.toTraceId?.();
+    const span_id = ctx?.toSpanId?.();
+    if (!trace_id || !span_id) return {};
+    return { dd: { trace_id, span_id, service: "seven-five", env: "prod" } };
+  } catch {
+    return {};
+  }
+}
 
 export default auth(async function proxy(req) {
   const start = Date.now();
@@ -28,6 +43,7 @@ export default auth(async function proxy(req) {
     user: userId ? { id: userId } : undefined,
     useragent: userAgent,
     duration_ms: Date.now() - start,
+    ...traceContext(),
   };
   console.log(JSON.stringify(entry));
 });
