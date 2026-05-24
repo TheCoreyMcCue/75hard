@@ -18,7 +18,7 @@ module.exports = {
     {
       name: "75hard",
       cwd: __dirname,
-      script: "npm",
+      script: "node_modules/next/dist/bin/next",
       args: "start",
       env: {
         NODE_ENV: "production",
@@ -28,7 +28,6 @@ module.exports = {
         DD_LOGS_INJECTION: "true",
         DD_RUNTIME_METRICS_ENABLED: "true",
         DD_TRACE_STARTUP_LOGS: "true",
-        DD_TRACE_DEBUG: "true",
         DD_TRACE_AGENT_URL: "http://127.0.0.1:8126",
         AUTH_TRUST_HOST: "true",
       },
