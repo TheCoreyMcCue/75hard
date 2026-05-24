@@ -1,16 +1,16 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getActiveChallenge } from "@/lib/db/challenges";
 import { getDailyLog, listDailyLogs } from "@/lib/db/daily-logs";
 import { dayNumberForChallenge } from "@/lib/challenge-helpers";
 import { Button } from "@/components/ui/button";
 import { Dashboard } from "./dashboard";
+import { Landing } from "./landing";
 
 export default async function Home() {
   const session = await auth();
   const userId = session?.user?.id;
-  if (!userId) redirect("/login");
+  if (!userId) return <Landing />;
 
   const active = await getActiveChallenge(userId);
   if (!active) {

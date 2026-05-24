@@ -1,6 +1,6 @@
 import type { NextAuthConfig } from "next-auth";
 
-const PUBLIC_PATHS = ["/login", "/signup"];
+const AUTH_PATHS = ["/login", "/signup"];
 
 export const authConfig = {
   pages: { signIn: "/login" },
@@ -9,12 +9,14 @@ export const authConfig = {
     authorized({ auth, request }) {
       const isLoggedIn = !!auth?.user;
       const { pathname } = request.nextUrl;
-      const isPublic = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
+      const isAuthPage = AUTH_PATHS.some((p) => pathname.startsWith(p));
+      const isRoot = pathname === "/";
 
-      if (isPublic) {
+      if (isAuthPage) {
         if (isLoggedIn) return Response.redirect(new URL("/", request.nextUrl));
         return true;
       }
+      if (isRoot) return true;
       return isLoggedIn;
     },
     jwt({ token, user }) {
