@@ -35,8 +35,8 @@ export type User = {
 };
 
 export const STANDARD_75HARD_TASKS: Omit<Task, "id">[] = [
-  { label: "Indoor workout (45 min)", description: "First of two daily workouts" },
-  { label: "Outdoor workout (45 min)", description: "Second workout must be outdoors" },
+  { label: "Workout 1 (45 min)", description: "One of today's two workouts must be outdoors" },
+  { label: "Workout 2 (45 min)" },
   { label: "Follow chosen diet", description: "No cheat meals" },
   { label: "No alcohol" },
   { label: "Drink 1 gallon of water" },
