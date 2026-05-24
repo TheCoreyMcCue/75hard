@@ -26,9 +26,6 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full antialiased">
       <body className="min-h-full">
-        <link rel="preconnect" href="https://browser-intake-datadoghq.com" crossOrigin="" />
-        <link rel="preconnect" href="https://session-replay-datadoghq.com" crossOrigin="" />
-        <link rel="dns-prefetch" href="https://browser-intake-datadoghq.com" />
         <DatadogInit />
         {children}
       </body>
