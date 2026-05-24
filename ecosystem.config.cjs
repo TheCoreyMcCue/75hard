@@ -27,6 +27,8 @@ module.exports = {
         DD_VERSION: process.env.DD_VERSION || gitSha(),
         DD_LOGS_INJECTION: "true",
         DD_RUNTIME_METRICS_ENABLED: "true",
+        DD_TRACE_STARTUP_LOGS: "true",
+        DD_TRACE_DEBUG: "false",
         AUTH_TRUST_HOST: "true",
       },
     },
