@@ -13,7 +13,7 @@ export default function SignupPage() {
             </span>
           </div>
           <h1 className="text-3xl font-black tracking-tight text-white">Create an account.</h1>
-          <p className="text-sm text-white/50">Signups are limited. Use an allowlisted email.</p>
+          <p className="text-sm text-white/50">Start tracking your challenge in under a minute.</p>
         </div>
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur-sm">
           <SignupForm />

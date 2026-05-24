@@ -16,9 +16,10 @@ const credentialsSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
-function allowlistContains(email: string): boolean {
+function allowlistAllows(email: string): boolean {
   const raw = process.env.ALLOWED_EMAILS ?? "";
-  if (!raw.trim()) return false;
+  // Empty/unset = signups are open to everyone.
+  if (!raw.trim()) return true;
   const allowed = raw
     .split(",")
     .map((e) => e.trim().toLowerCase())
@@ -48,7 +49,7 @@ export async function signupAction(
   const { email, password } = parsed.data;
   log.info("signup.attempt", { email });
 
-  if (!allowlistContains(email)) {
+  if (!allowlistAllows(email)) {
     log.warn("signup.rejected_allowlist", { email });
     return { error: "Signups are restricted. Contact the owner if you need access." };
   }
