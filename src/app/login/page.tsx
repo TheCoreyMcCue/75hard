@@ -1,5 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { LoginForm } from "./login-form";
+
+export const metadata: Metadata = {
+  title: "Log in",
+  description: "Log in to your 75 Hard Tracker account to continue your challenge.",
+  robots: { index: false, follow: true },
+};
 
 export default function LoginPage() {
   return (

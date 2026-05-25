@@ -1,5 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { SignupForm } from "./signup-form";
+
+export const metadata: Metadata = {
+  title: "Sign up — Free 75 Hard Tracker",
+  description:
+    "Create a free account to start your 75 Hard challenge with custom rules. No ads, no premium tier.",
+};
 
 export default function SignupPage() {
   return (
