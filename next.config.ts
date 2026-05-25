@@ -19,6 +19,11 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_DD_VERSION: version,
   },
   serverExternalPackages: ["dd-trace"],
+  async rewrites() {
+    return [
+      { source: "/favicon.ico", destination: "/icon" },
+    ];
+  },
 };
 
 export default nextConfig;
